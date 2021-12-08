@@ -106,7 +106,6 @@ def backward(X,A,E):
     allStates = A.keys()
     emittingStates = E.keys()
     L = len(X) + 2
-
     # Initialize
     B = {k:[0] * L for k in allStates} # The Backward trellis
     for k in allStates:
@@ -116,9 +115,17 @@ def backward(X,A,E):
     # START CODING HERE #
     #####################
     # Remaining columns
-    # for i in range(L-3,-1,-1):
-    #     s = seq[i]
-    #     ...
+    for i in range(L-3,-1,-1):
+        s = X[i]
+        for k in allStates:
+            # print(B['B'][i+1])
+            # print(A['B'][l])
+            
+            terms = [B[l][i+1]*A[k][l]*E[l][s] for l in emittingStates]
+            B[k][i] = sum(terms)
+            # print(i, ' terms: ', terms)
+            # print("Values bitch", k, i, B[k][i+1])
+
 
     #####################
     #  END CODING HERE  #
