@@ -79,11 +79,16 @@ def forward(X,A,E):
     # Adapt the viterbi() function to account for the differences.
 
     # Middle columns
-    # for ...
+    for i,s in enumerate(X):
+        for l in emittingStates:
+            terms = [F[k][i] * A[k][l] for k in allStates]
+            F[l][i+1] = sum(terms) * E[l][s]
 
-    # Last columns
-    # for ...:
-    #     F['E'][-1] += ...
+    # Last column
+    for k in allStates:
+        term = F[k][i+1] * A[k]['E'] 
+        if term > F['E'][-1]:
+            F['E'][-1] = term
 
     #####################
     #  END CODING HERE  #
