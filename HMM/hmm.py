@@ -102,7 +102,7 @@ def forward(X,A,E):
 def backward(X,A,E):
     """Given a single sequence, with Transition and Emission probabilities,
     return the Backward probability and corresponding trellis."""
-
+    # 
     allStates = A.keys()
     emittingStates = E.keys()
     L = len(X) + 2
@@ -118,14 +118,9 @@ def backward(X,A,E):
     for i in range(L-3,-1,-1):
         s = X[i]
         for k in allStates:
-            # print(B['B'][i+1])
-            # print(A['B'][l])
-            
+            # Slightly different order of evaluation
             terms = [B[l][i+1]*A[k][l]*E[l][s] for l in emittingStates]
             B[k][i] = sum(terms)
-            # print(i, ' terms: ', terms)
-            # print("Values bitch", k, i, B[k][i+1])
-
 
     #####################
     #  END CODING HERE  #
@@ -159,16 +154,42 @@ def baumwelch(set_X,A,E):
         P,F = forward(X,A,E)  # Save both the forward probability and the forward trellis
         _,B = backward(X,A,E) # Forward P == Backward P, so only save the backward trellis
         SLL += log10(P)
-
         #####################
         # START CODING HERE #
         #####################
+
+        symbols = list(E.values())[0].keys() # Would have prefered this outside the for-loop
+        for k in list(allStates)[:-1]: # Include begin- but skip end-state
+            for l in list(allStates)[1:]:
+                if l == 'E': # End state clause
+                    posterior_A = [F[k][-2] * A[k][l]]
+                else:
+                    posterior_A = [F[k][i] * B[l][i+1] * A[k][l] * E[l][X[i]] for i in range(len(X))]
+                
+                new_A[k][l] += sum(posterior_A)/P
+        
+        for k in emittingStates:
+            for sym in symbols:
+                posterior_E = [F[k][i] * B[k][i] for i in range(len(X)) if X[i] == sym]
+                new_E[k][sym] += sum(posterior_E)/P
 
         # Inside the for loop: Expectation
         # Calculate the expected transitions and emissions for the sequence.
         # Add the contributions to your posterior matrices.
         # Remember to normalize to the sequence's probability P!
         
+    # for k in E:
+    #     norm_E = sum(new_E[k].values())
+    #     for s in new_E[k]: 
+    #         new_E[k][s] = new_E[k][s]/norm_E
+
+    # Normalization of A
+    for k in list(A)[:-1]:
+        norm_A = sum(new_A[k].values())
+        for l in list(new_A[k]):
+            new_A[k][l] = new_A[k][l]/norm_A
+        
+    # print(new_A, new_E)
     # Outside the for loop: Maximization
     # Normalize row sums to 1 (except for one row in the Transition matrix!)
     # new_A = ...
