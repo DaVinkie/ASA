@@ -158,7 +158,13 @@ def baumwelch(set_X,A,E):
         # START CODING HERE #
         #####################
 
+        # Inside the for loop: Expectation
+        # Calculate the expected transitions and emissions for the sequence.
+        # Add the contributions to your posterior matrices.
+        # Remember to normalize to the sequence's probability P!
+        
         symbols = list(E.values())[0].keys() # Would have prefered this outside the for-loop
+        
         for k in list(allStates)[:-1]: # Include begin- but skip end-state
             for l in list(allStates)[1:]:
                 if l == 'E': # End state clause
@@ -170,18 +176,17 @@ def baumwelch(set_X,A,E):
         
         for k in emittingStates:
             for sym in symbols:
-                posterior_E = [F[k][i] * B[k][i] for i in range(len(X)) if X[i] == sym]
+                posterior_E = [F[k][i+1] * B[k][i+1] for i in range(len(X)) if X[i] == sym]
                 new_E[k][sym] += sum(posterior_E)/P
-
-        # Inside the for loop: Expectation
-        # Calculate the expected transitions and emissions for the sequence.
-        # Add the contributions to your posterior matrices.
-        # Remember to normalize to the sequence's probability P!
-        
-    # for k in E:
-    #     norm_E = sum(new_E[k].values())
-    #     for s in new_E[k]: 
-    #         new_E[k][s] = new_E[k][s]/norm_E
+    
+    # Outside the for loop: Maximization
+    # Normalize row sums to 1 (except for one row in the Transition matrix!)
+    
+    # Normalization of E
+    for k in E:
+        norm_E = sum(new_E[k].values())
+        for s in new_E[k]: 
+            new_E[k][s] = new_E[k][s]/norm_E
 
     # Normalization of A
     for k in list(A)[:-1]:
@@ -189,11 +194,7 @@ def baumwelch(set_X,A,E):
         for l in list(new_A[k]):
             new_A[k][l] = new_A[k][l]/norm_A
         
-    # print(new_A, new_E)
-    # Outside the for loop: Maximization
-    # Normalize row sums to 1 (except for one row in the Transition matrix!)
-    # new_A = ...
-    # new_E = ...
+    
 
     #####################
     #  END CODING HERE  #
