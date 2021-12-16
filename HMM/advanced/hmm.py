@@ -8,7 +8,7 @@ INSTRUCTIONS:
     Complete the code (compatible with Python 3!) upload to CodeGrade via corresponding Canvas assignment.
 
 AUTHOR:
-    <your name and student number here>
+    Daniël Vink (2715294)
 """
 
 import os.path as op
@@ -79,11 +79,14 @@ def forward(X,A,E):
     # Adapt the viterbi() function to account for the differences.
 
     # Middle columns
-    # for ...
+    for i,s in enumerate(X):
+        for l in emittingStates:
+            terms = [F[k][i] * A[k][l] for k in allStates]
+            F[l][i+1] = sum(terms) * E[l][s]
 
-    # Last columns
-    # for ...:
-    #     F['E'][-1] += ...
+    # Last column
+    fin_terms = [F[k][i+1] * A[k]['E'] for k in allStates]
+    F['E'][-1] = sum(fin_terms)
 
     #####################
     #  END CODING HERE  #
@@ -97,11 +100,10 @@ def forward(X,A,E):
 def backward(X,A,E):
     """Given a single sequence, with Transition and Emission probabilities,
     return the Backward probability and corresponding trellis."""
-
+    # 
     allStates = A.keys()
     emittingStates = E.keys()
     L = len(X) + 2
-
     # Initialize
     B = {k:[0] * L for k in allStates} # The Backward trellis
     for k in allStates:
@@ -111,9 +113,12 @@ def backward(X,A,E):
     # START CODING HERE #
     #####################
     # Remaining columns
-    # for i in range(L-3,-1,-1):
-    #     s = seq[i]
-    #     ...
+    for i in range(L-3,-1,-1):
+        s = X[i]
+        for k in allStates:
+            # Slightly different order of evaluation
+            terms = [B[l][i+1]*A[k][l]*E[l][s] for l in emittingStates]
+            B[k][i] = sum(terms)
 
     #####################
     #  END CODING HERE  #
@@ -147,20 +152,47 @@ def baumwelch(set_X,A,E):
         P,F = forward(X,A,E)  # Save both the forward probability and the forward trellis
         _,B = backward(X,A,E) # Forward P == Backward P, so only save the backward trellis
         SLL += log10(P)
-
         #####################
         # START CODING HERE #
         #####################
 
         # Inside the for loop: Expectation
-        # Count how often you observe each transition and emission.
-        # Add the counts to your posterior matrices.
+        # Calculate the expected transitions and emissions for the sequence.
+        # Add the contributions to your posterior matrices.
         # Remember to normalize to the sequence's probability P!
         
+        symbols = list(E.values())[0].keys() # Would have prefered this outside the for-loop
+        
+        for k in list(allStates)[:-1]: # Include begin- but skip end-state
+            for l in list(allStates)[1:]:
+                if l == 'E': # End state clause
+                    posterior_A = [F[k][-2] * A[k][l]]
+                else:
+                    posterior_A = [F[k][i] * B[l][i+1] * A[k][l] * E[l][X[i]] for i in range(len(X))]
+                
+                new_A[k][l] += sum(posterior_A)/P
+        
+        for k in emittingStates:
+            for sym in symbols:
+                posterior_E = [F[k][i+1] * B[k][i+1] for i in range(len(X)) if X[i] == sym]
+                new_E[k][sym] += sum(posterior_E)/P
+    
     # Outside the for loop: Maximization
     # Normalize row sums to 1 (except for one row in the Transition matrix!)
-    # new_A = ...
-    # new_E = ...
+    
+    # Normalization of E
+    for k in E:
+        norm_E = sum(new_E[k].values())
+        for s in new_E[k]: 
+            new_E[k][s] = new_E[k][s]/norm_E
+
+    # Normalization of A
+    for k in list(A)[:-1]:
+        norm_A = sum(new_A[k].values())
+        for l in list(new_A[k]):
+            new_A[k][l] = new_A[k][l]/norm_A
+        
+    
 
     #####################
     #  END CODING HERE  #
@@ -256,7 +288,10 @@ def main(args = False):
             if verbosity >= 2: print_params(A,E)
 
         converged = current_SLL - last_SLL <= threshold
-        final_SLL = sum([log10(forward(X,A,E)[0]) for X in set_X])
+        try:
+            final_SLL = sum([log10(forward(X,A,E)[0]) for X in set_X])
+        except ValueError:
+            final_SLL = 0
 
         # Save and/or print relevant output
         save('SLL','%1.2e\t%i\t%s' % (final_SLL, i, converged))

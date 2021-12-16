@@ -12,7 +12,7 @@ INSTRUCTIONS:
     training! Continuous Feedback will not be available for this script.
 
 AUTHOR:
-    <your name and student number here>
+    Daniël Vink (2715294)
 """
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -30,11 +30,21 @@ def parse_args():
     # argparse documentation, the parser in hmm_utility.py or align.py
     # (from the Dynamic Programming exercise) for hints on how to do this.
 
-    parser = ArgumentParser()
+    parser = ArgumentParser(prog = 'python3 sequence_generator.py',
+        formatter_class = RawTextHelpFormatter, description = 
+        '''
+            Generate a specified amount of sequences from a given transition and emission matrices.
+            Example syntax: \n
+                python3 sequence_generator.py -n 100 -o output A.tsv E.tsv
+        ''')
+
+    parser.add_argument('-o', dest='out', default='sequence', help='Name of output file')
+    parser.add_argument('-n', dest='amount', type=int, default=10, help='Amount of sequences to generate')
+    parser.add_argument('transition', help='path to a TSV formatted transition matrix')
+    parser.add_argument('emission', help='path to a TSV formatted emission matrix')
     # parser.add_argument(?)
-    # parser.add_argument(?)
-    # parser.add_argument(?)
-    # parser.add_argument(?)
+
+    return parser.parse_args()
     
     #####################
     #  END CODING HERE  #
@@ -50,9 +60,21 @@ def generate_sequence(A,E):
     
     # Look up its documentation online:
     # https://docs.scipy.org/doc/numpy-1.15.0/reference/generated/numpy.random.choice.html
-            
-    sequence = '?'
     
+    sequence = '-'
+    state = 'B'
+    while True:
+        state = choice(list(A[state].keys()), 1, p=list(A[state].values()))[0]
+        if state == 'E': 
+            break
+        else:
+            char = choice(list(E[state].keys()), 1, p=list(E[state].values()))[0]
+            sequence = sequence + char
+
+    sequence = sequence[1:]
+
+
+
     #####################
     #  END CODING HERE  #
     #####################
@@ -68,15 +90,18 @@ def main():
     #####################
     # Uncomment and complete (i.e. replace '?' in) the lines below:
     
-    # N = args.?               # The number of sequences to generate
-    # out_file = args.?        # The file path to which to save the sequences
-    # A = load_tsv(args.? )    # Transition matrix
-    # E = load_tsv(args.? )    # Emission matrix
-    # with open(out_file,'w') as f:
-        # for i in range(N):
-        #     seq = ?
-        #     f.write('>random_sequence_%i\n%s\n' % (i,seq))
+    N = args.amount                 # The number of sequences to generate
+    out_file = args.out + '.fasta'  # The file path to which to save the sequences
+    A = load_tsv(args.transition)   # Transition matrix
+    E = load_tsv(args.emission)     # Emission matrix
+
+    with open(out_file,'w') as f:
+        for i in range(N):
+            seq = generate_sequence(A, E)
+            f.write('>random_sequence_%i\n%s\n' % (i,seq))
         
+    # generate_sequence(A, E)
+    # print(A['B'].keys(), A['B'].values())
     #####################
     #  END CODING HERE  #
     #####################

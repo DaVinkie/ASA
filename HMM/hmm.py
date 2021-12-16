@@ -8,7 +8,7 @@ INSTRUCTIONS:
     Complete the code (compatible with Python 3!) upload to CodeGrade via corresponding Canvas assignment.
 
 AUTHOR:
-    <your name and student number here>
+    Daniël Vink (2715294)
 """
 
 import os.path as op
@@ -87,13 +87,6 @@ def forward(X,A,E):
     # Last column
     fin_terms = [F[k][i+1] * A[k]['E'] for k in allStates]
     F['E'][-1] = sum(fin_terms)
-
-    # for k in allStates:
-    #     term = F[k][i+1] * A[k]['E']
-    #     print("test", i,  F[k][i+1], A[k]['E'])
-    #     if term > F['E'][-1]:
-    #         print("test2", F['E'][-1])
-    #         F['E'][-1] = term
 
     #####################
     #  END CODING HERE  #

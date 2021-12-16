@@ -1,0 +1,2 @@
+1. Handmatig checken of A en E kloppen -> Er gaat sowieso iets mis bij transities vanuit B
+2. 

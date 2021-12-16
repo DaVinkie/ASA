@@ -12,7 +12,7 @@ INSTRUCTIONS:
     training!
 
 AUTHOR:
-    <your name and student number here>
+    Daniël Vink (2715294)
 """
 
 import os.path as op
@@ -56,23 +56,40 @@ def train_viterbi(X,A,E):
     #####################
     # Initialize your posterior matrices
     new_A = {}    
-    # for k in A: ...
+    for k in A:
+        new_A[k] = {l:0 for l in A[k]}
 
     new_E = {}
-    # for k in E: ...
-    
+    for k in E:
+        new_E[k] = {s:0 for s in E[k]}
 
+    
     # Get the state path of every sequence in X,
     # using the viterbi() function imported from hmm.py
-    for seq,label in X:
-        # ...
-        pass
+    for seq in X:
+        pi, _, _ = viterbi(seq, A, E)
+    # Transition and emission counts
+        for i in range(len(pi)-1):
+            new_A[pi[i]][pi[i+1]] += 1
+            new_E[pi[i]][seq[i]] +=1
 
-        # Count the transitions and emissions for every state
+        new_A['B'][pi[0]] += 1  # Start state
+        new_A[pi[-1]]['E'] += 1 # End state
+        new_E[pi[-1]][seq[-1]] += 1 
 
+    
+    # Normalizing new matrices
+    for k in list(new_A)[:-1]: # Normalizing E divides by zero
+        norm_A = sum(new_A[k].values())
+        for l in new_A[k]:
+            new_A[k][l] = new_A[k][l] / norm_A 
 
-    # Normalize your row sums
+    for k in new_E:
+        norm_E = sum(new_E[k].values())
+        for l in new_E[k]:
+            new_E[k][l] = new_E[k][l] / norm_E
 
+    # print(new_A, new_E)
 
     #####################
     #  END CODING HERE  #
@@ -99,7 +116,14 @@ def main(args = False):
     # Iterate until you've reached i_max or until your parameters have converged!
     # Note Viterbi converges discretely (unlike Baum-Welch), so you don't need to
     # track your Sum Log-Likelihood to decide this.
-
+    
+    for i in range(i_max):
+        new_A, new_E = train_viterbi(set_X, A, E)
+        if new_A == A and new_E == E:
+            break
+        else:
+            A = new_A
+            E = new_E
 
     #####################
     #  END CODING HERE  #
